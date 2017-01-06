@@ -15,7 +15,8 @@ def safe_iter(var):
 
 class GoogleMapPlotter(object):
 
-    def __init__(self, center_lat, center_lng, zoom):
+    def __init__(self, center_lat, center_lng, api_key, zoom=13):
+        self.api_key = api_key
         self.center = (float(center_lat), float(center_lng))
         self.zoom = int(zoom)
         self.grids = None
@@ -30,14 +31,14 @@ class GoogleMapPlotter(object):
         self.html_color_codes = html_color_codes
 
     @classmethod
-    def from_geocode(cls, location_string, zoom=13):
+    def from_geocode(cls, location_string, api_key, zoom=13):
         lat, lng = cls.geocode(location_string)
-        return cls(lat, lng, zoom)
+        return cls(center_lat= lat, center_lng= lng, zoom= zoom, api_key= api_key)
 
     @classmethod
     def geocode(self, location_string):
         geocode = requests.get(
-            'http://maps.googleapis.com/maps/api/geocode/json?address="%s"' % location_string)
+            'http://maps.googleapis.com/maps/api/geocode/json?address="{loc}"&key={api_key}'.format(loc= location_string, api_key= self.api_key))
         geocode = json.loads(geocode.text)
         latlng_dict = geocode['results'][0]['geometry']['location']
         return latlng_dict['lat'], latlng_dict['lng']
@@ -179,7 +180,9 @@ class GoogleMapPlotter(object):
         f.write(
             '<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>\n')
         f.write('<title>Google Maps - pygmaps </title>\n')
-        f.write('<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=visualization&sensor=true_or_false"></script>\n')
+        f.write('<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js'\
+                                                        '?libraries=visualization&sensor=true_or_false'\
+                                                        '&key={api_key}"></script>\n'.format(api_key= self.api_key))
         f.write('<script type="text/javascript">\n')
         f.write('\tfunction initialize() {\n')
         self.write_map(f)
